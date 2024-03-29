@@ -1,0 +1,11 @@
+Database Tables:
+-Episodes
+    -id: INT(Primary)
+    -title: VARCHAR(225)
+    -air_date: DATE
+    -subject_matter: VARCHAR(225)
+
+- Colors
+    -id: INT(Primary)
+    -color_name: VARCHAR(50)
+    -hex_code: VARCHAR(10)
