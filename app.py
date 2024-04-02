@@ -35,3 +35,39 @@ def get_episodes():
     conn.close()
     return jsonify(episodes)
 
+@app.route('/episodes/subject', methods=['GET'])
+def get_episodes_by_subject():
+    subject = request.args.get('subject')
+    query = """
+    SELECT e.* FROM Episodes e
+    JOIN Episode_Subjects es ON e.episode_id = es.episode_id
+    JOIN Subjects s ON es.subject_id = s.subject_id
+    WHERE s.subject_name = %s
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(query, (subject, ))
+    episodes = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(episodes)
+
+@app.route('/episodes/color', methods=['GET'])
+def get_episodes_by_color():
+    color = request.args.get('color')
+    query = """
+    SELECT e.* FROM Episodes e
+    JOIN Episode_Colors ec ON e.episode_id = ec.episode_id
+    JOIN Colors c ON ec.color_id = c.color_id
+    WHERE c.color_name = %s
+    """
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(query, (color,))
+    episodes = cursor.fetchall()
+    cursor.close()
+    return jsonify(episodes)
+
+if __name__ == '__main__':
+    app.run(debug=True)
