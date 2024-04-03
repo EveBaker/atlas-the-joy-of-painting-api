@@ -30,5 +30,15 @@ def main():
     process_episodes(df_episodes)
     print("ETL Process Completed")
 
+    colors_csv = 'The Joy Of Painiting - Colors Used'
+    df_colors = load_data(colors_csv)
+    process_episodes(df_colors)
+    print("ETL Process Completed")
+
+    subject_csv = 'The Joy Of Painiting - Subject Matter'
+    df_subject = load_data(subject_csv)
+    process_episodes(df_subject)
+    print("ETL Process Completed")
+
 if __name__ == "__main__":
     main()

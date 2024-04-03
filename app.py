@@ -4,6 +4,7 @@ from mysql.connector import Error
 
 app = Flask(__name__)
 
+# Function to establish database connection
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
@@ -17,24 +18,22 @@ def get_db_connection():
         print(f"Error connecting to MYSQL: {e}")
         return None
     
+# Route to fetch episodes
 @app.route('/episodes', methods=['GET'])
 def get_episodes():
-    """fetches episodes"""
     month = request.args.get('month')
     query = "SELECT * FROM Episodes"
     if month:
         query += " WHERE MONTH(air_date) = %s"
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    if month:
-        cursor.execute(query, (month,))
-    else:
-        cursor.execute(query)
+    cursor.execute(query, (month,))
     episodes = cursor.fetchall()
     cursor.close()
     conn.close()
     return jsonify(episodes)
 
+# Route to fetch episodes by subject
 @app.route('/episodes/subject', methods=['GET'])
 def get_episodes_by_subject():
     subject = request.args.get('subject')
@@ -46,12 +45,13 @@ def get_episodes_by_subject():
     """
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute(query, (subject, ))
+    cursor.execute(query, (subject,))
     episodes = cursor.fetchall()
     cursor.close()
     conn.close()
     return jsonify(episodes)
 
+# Route to fetch episodes by color
 @app.route('/episodes/color', methods=['GET'])
 def get_episodes_by_color():
     color = request.args.get('color')
@@ -62,15 +62,12 @@ def get_episodes_by_color():
     WHERE c.color_name = %s
     """
     conn = get_db_connection()
-    if conn is None:
-        return jsonify({"error": "Failed to connect to the database"}), 500
     cursor = conn.cursor(dictionary=True)
     cursor.execute(query, (color,))
     episodes = cursor.fetchall()
     cursor.close()
     conn.close()
     return jsonify(episodes)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
