@@ -1,3 +1,7 @@
+CREATE DATABASE JoyOfPaintingDB;
+
+USE JoyOfPaintingDB;
+
 CREATE TABLE Episodes (
     episode_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(225) NOT NULL,
