@@ -21,7 +21,7 @@ def get_db_connection():
 def get_episodes():
     """fetches episodes"""
     month = request.args.get('month')
-    query = "SELECT * FRON Episodes"
+    query = "SELECT * FROM Episodes"
     if month:
         query += " WHERE MONTH(air_date) = %s"
     conn = get_db_connection()
@@ -61,13 +61,16 @@ def get_episodes_by_color():
     JOIN Colors c ON ec.color_id = c.color_id
     WHERE c.color_name = %s
     """
-
     conn = get_db_connection()
+    if conn is None:
+        return jsonify({"error": "Failed to connect to the database"}), 500
     cursor = conn.cursor(dictionary=True)
     cursor.execute(query, (color,))
     episodes = cursor.fetchall()
     cursor.close()
+    conn.close()
     return jsonify(episodes)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
