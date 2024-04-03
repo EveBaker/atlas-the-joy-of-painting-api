@@ -6,7 +6,7 @@ CREATE TABLE Episodes (
     episode_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(225) NOT NULL,
     season INT NOT NULL,
-    episode INT NOT NULL, -- Added column for episode number
+    episode INT NOT NULL,
     air_date DATE NOT NULL
 );
 
