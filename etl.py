@@ -1,44 +1,68 @@
 import pandas as pd
 import mysql.connector
+from mysql.connector import Error
 
-def connect_to_db():
-    return mysql.connector.connect(host='localhost', database='JoyOfPaintingDB', user='localhost', password='root')
+# Database connection parameters
+db_config = {
+    'host': 'localhost',
+    'database': 'JoyOfPaintingDB',
+    'user': 'root',
+    'password': 'root'
+}
 
-def load_data(csv_path):
-    return pd.read_csv(csv_path)
-
-def process_episodes(df):
-    connection = connect_to_db()
-    cursor = connection.cursor()
-
-    for _, row in df.iterrows():
-        try:
-            cursor.execute("INSERT INTO Episodes (title, season, episode, air_date) VALUES (%s, %s, %s, %s)", 
-                           (row['Title'], int(row['Season']), int(row['Episode']), row['AirDate']))
-        except mysql.connector.Error as err:
-            print("Error: ", err)
-            connection.rollback()
-        else:
+def load_data_to_db(df, table_name):
+    """
+    Load a DataFrame to the specified database table.
+    """
+    try:
+        connection = mysql.connector.connect(**db_config)
+        if connection.is_connected():
+            cursor = connection.cursor()
+            for i, row in df.iterrows():
+                placeholders = ', '.join(['%s'] * len(row))
+                columns = ', '.join(row.index)
+                sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+                cursor.execute(sql, tuple(row))
+            
             connection.commit()
+    except Error as e:
+        print(f"Error: {e}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
-    cursor.close()
-    connection.close()
+def transform_data():
+    dataset_paths = {
+        'episodes': 'The Joy Of Painting - Episode Dates.csv',
+        'subjects': 'The Joy Of Painiting - Subject Matter.csv',
+        'colors': 'The Joy Of Painiting - Colors Used.csv'
+    }
 
-def main():
-    episodes_csv = 'The Joy Of Painting - Episode Dates.csv'
-    df_episodes = load_data(episodes_csv)
-    process_episodes(df_episodes)
-    print("ETL Process Completed")
+    # Extract
+    episodes_df = pd.read_csv(dataset_paths['episodes'])
+    subjects_df = pd.read_csv(dataset_paths['subjects'])
+    colors_df = pd.read_csv(dataset_paths['colors'])
 
-    colors_csv = 'The Joy Of Painiting - Colors Used'
-    df_colors = load_data(colors_csv)
-    process_episodes(df_colors)
-    print("ETL Process Completed")
+    # Transform
 
-    subject_csv = 'The Joy Of Painiting - Subject Matter'
-    df_subject = load_data(subject_csv)
-    process_episodes(df_subject)
-    print("ETL Process Completed")
+    # 1. Standardizing Date Formats
+    episodes_df['air_date'] = pd.to_datetime(episodes_df['air_date']).dt.date
+
+    # 2. Deduplicating Subjects and Colors
+    subjects_df = subjects_df.drop_duplicates(subset=['subject_name'])
+    subjects_df['subject_name'] = subjects_df['subject_name'].str.title()
+
+    colors_df = colors_df.drop_duplicates(subset=['color_name'])
+    colors_df['color_name'] = colors_df['color_name'].str.lower() 
+
+    # 3. Handling Missing Values (example for episodes)
+    episodes_df = episodes_df.dropna(subset=['title', 'air_date'])
+
+    # Load
+    load_data_to_db(episodes_df, 'Episodes')
+    load_data_to_db(subjects_df, 'Subjects')
+    load_data_to_db(colors_df, 'Colors')
 
 if __name__ == "__main__":
-    main()
+    transform_data()
