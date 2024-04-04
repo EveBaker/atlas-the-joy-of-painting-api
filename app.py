@@ -15,23 +15,30 @@ def get_db_connection():
         )
         return connection
     except Error as e:
-        print(f"Error connecting to MYSQL: {e}")
-        return None
+        raise Exception(f"Error connecting to MYSQL: {e}")
     
 # Route to fetch episodes
 @app.route('/episodes', methods=['GET'])
 def get_episodes():
     month = request.args.get('month')
     query = "SELECT * FROM Episodes"
+    params = ()
     if month:
         query += " WHERE MONTH(air_date) = %s"
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(query, (month,))
-    episodes = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(episodes)
+        params = (month,)
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(query, params)
+        episodes = cursor.fetchall()
+        return jsonify(episodes)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 
 # Route to fetch episodes by subject
 @app.route('/episodes/subject', methods=['GET'])
